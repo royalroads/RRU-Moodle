@@ -1,0 +1,9 @@
+You need to add a link to the assignment 'submissions' page... 
+
+  you can install using the command:
+
+patch -p0 < assignment_response.patch
+
+or, you can simply make the changes as desired yourself.
+
+You should DELETE the assignment_response.patch file after you're done.
