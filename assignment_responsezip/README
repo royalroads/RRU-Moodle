@@ -1,8 +1,10 @@
-Provides a way for instructors to submit assignment responses in bulk (zip file)
+Name: assignment response zip
+Description: Provides a way for instructors to submit assignment responses in bulk (zip file)
+       Provides a link on the assignment submissions page (next to download all submissions)
 
-1. Provides a link on the assignment submissions page (next to download all submissions)
+Installation Instructions:
 
-  * run patch
+run patch
 
 patch -p0 < assignment_response.patch
 
