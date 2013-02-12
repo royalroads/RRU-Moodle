@@ -1,9 +1,9 @@
-You need to add a link to the assignment 'submissions' page... 
+Provides a way for instructors to submit assignment responses in bulk (zip file)
 
-  you can install using the command:
+1. Provides a link on the assignment submissions page (next to download all submissions)
+
+  * run patch
 
 patch -p0 < assignment_response.patch
 
-or, you can simply make the changes as desired yourself.
 
-You should DELETE the assignment_response.patch file after you're done.
