@@ -1,4 +1,5 @@
-run patch on blocks/course_overview to add sort logic
-add settings.php for administrative settings
+Name: course_overview (core module mod)
+Description:  provides option to sort courses by visiblity, and course start_date (default is by order number)
 
-provides option to sort courses by visibility, and course start_date (desc)
+run patch on blocks/course_overview to add sort logic
+Adds an administrative setting (default is coursesortorder  - moodle core value)
