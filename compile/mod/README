@@ -1,0 +1,16 @@
+To create support for a new module type, I've been doing the following:
+
+1) Create a new subdirectory with the module name (exactly!) in the 'compile/mod/' directory
+
+2) Copy the 'view.php' file from the original module to the new subdirectory, renaming the file to 'compile.php'
+
+3) Modify the new compile.php file, so that it displays the content of the module as desired.  Specifically:
+	- Do NOT call the 'header' function, because it displays the header AND the navigation
+	- Do NOT call the 'footer' function
+	- Do not call the 'log' function, as we've already logged that we're compiling the course.
+	- Do NOT call any of the 'module completed' code, so that someone doesn't progress through the activity 
+	  just because the compiled the course.  Compiling an activity should not count as completing it.
+	- Do sanity check and consider, "Is this logical information to print out on paper?". ie. A link, 	
+	  without showing the exact location, doesn't do a person reading a paper copy much good.
+
+4) Enable the module type in admin settings page, if you haven't done so already. 
