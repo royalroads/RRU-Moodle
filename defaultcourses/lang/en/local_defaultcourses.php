@@ -25,9 +25,11 @@
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 $string['pluginname'] = 'Default Courses';
 
-// Settings
+// Settings.
 $string['definecourseids'] = 'Default course(s)';
 $string['definecourseids_help'] = 'Use the "Ctrl" key or the "shift" key to select multiple courses in which all users should be enroled.' .
                                   'NOTE: selecting many courses may affect performance';
