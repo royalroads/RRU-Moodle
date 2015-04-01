@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,76 +15,60 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Resource module version information
+ * Compile resource module
  *
- * @package    mod
- * @subpackage resource
- * @copyright  2009 Petr Skoda  {@link http://skodak.org}
+ * @package    local_compile
+ * @subpackage mod_resource
+ * @copyright  2014 Royal Roads University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require('../../../../config.php');
+require_once('../../lib.php');
 require_once($CFG->dirroot.'/mod/resource/locallib.php');
-require_once($CFG->libdir.'/completionlib.php');
+defined('MOODLE_INTERNAL') || die(); // Must occur after loading config.php.
 
-$id       = optional_param('id', 0, PARAM_INT); // Course Module ID
-$r        = optional_param('r', 0, PARAM_INT);  // Resource instance ID
-$redirect = optional_param('redirect', 0, PARAM_BOOL);
-
-if ($r) {
-    if (!$resource = $DB->get_record('resource', array('id'=>$r))) {
-        resource_redirect_if_migrated($r, 0);
-        print_error('invalidaccessparameter');
+// Get and qualify Course Module ID.
+$modname = 'resource'; // Set to the name of the module.
+$id = optional_param('id', 0, PARAM_INT); // Get Course Module ID.
+if ($id) {
+    if (! $cm = get_coursemodule_from_id($modname, $id)) {
+        die(get_string('invalidcoursemodule', 'error'));
     }
-    $cm = get_coursemodule_from_instance('resource', $resource->id, $resource->course, false, MUST_EXIST);
 
+    if (! $course = $DB->get_record("course", array("id" => $cm->course))) {
+        die(get_string('coursemisconf', 'error'));
+    }
+
+    if (! $instance = $DB->get_record($modname, array("id" => $cm->instance))) {
+        die(get_string('invalidcoursemodule', 'error'));
+    }
 } else {
-    if (!$cm = get_coursemodule_from_id('resource', $id)) {
-        resource_redirect_if_migrated(0, $id);
-        print_error('invalidcoursemodule');
-    }
-    $resource = $DB->get_record('resource', array('id'=>$cm->instance), '*', MUST_EXIST);
+    die(get_string('invalidcoursemodule', 'error'));
 }
 
-$course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-
-require_course_login($course, true, $cm);
-$context = get_context_instance(CONTEXT_MODULE, $cm->id);
-require_capability('mod/resource:view', $context);
-
-$PAGE->set_url('/local/comile/mod/resource/compile.php', array('id' => $cm->id));
-
-if ($resource->tobemigrated) {
-    resource_print_tobemigrated($resource, $cm, $course);
-    die;
-}
+$resource = $DB->get_record('resource', array('id' => $cm->instance), '*', MUST_EXIST);
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+$context = context_module::instance($cm->id);
 
 $fs = get_file_storage();
+
+// Although there should only ever be 0 or 1 file(s) associated with this module instance,
+// the File API only supports getting an array of them by instance context id.
 $files = $fs->get_area_files($context->id, 'mod_resource', 'content', 0, 'sortorder');
 if (count($files) < 1) {
     resource_print_filenotfound($resource, $cm, $course);
     die;
 } else {
-    $file = array_pop($files);
+    $file = array_pop($files); // There can be only one.
 }
 
-$resource->mainfile = $file->get_filename();
-resource_compile_workaround($resource, $cm, $course, $file);
+$intro = compile_activity_intro($cm);
 
-function resource_compile_workaround($resource, $cm, $course, $file) {
-    global $CFG, $OUTPUT;
+// Output module content: Intro (description).
+print get_string('intro', 'local_compile', $intro);
 
-    //resource_print_intro($resource, $cm, $course, true);
-    echo format_module_intro('resource', $resource, $cm->id);
+// Output the actual filename.
+$filename = $file->get_filename();
+print get_string('resource_filename', 'local_compile', $filename);
 
-    $resource->mainfile = $file->get_filename();
-    echo '<div class="resourceworkaround">';
-    
-    $path = '/'.$file->get_contextid().'/mod_resource/content/'.$resource->revision.$file->get_filepath().$file->get_filename();
-    $fullurl = file_encode_url($CFG->wwwroot.'/pluginfile.php', $path, false);
-    echo "<a href=\"$fullurl\">$fullurl</a>";
-  
-    echo '</div>';
-
-    die;
-}

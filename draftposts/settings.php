@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,15 +25,16 @@
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-global $DB, $CFG;
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) { // needs this condition or there is error on login page
+global $DB, $CFG;
+
+if ($hassiteconfig) { // Needs this condition or there is error on login page.
     $settings = new admin_settingpage('draftposts', get_string('pluginname', 'local_draftposts'));
     $ADMIN->add('localplugins', $settings);
 
-    // Add a setting to handle the duration before a draft is saved
+    // Add a setting to handle the duration before a draft is saved.
     $settings->add(new admin_setting_configtext('local_draftposts/'.'saveinterval', get_string('saveinterval', 'local_draftposts'),
                                             get_string('saveinterval_help', 'local_draftposts'), 180));
-    
+
 }

@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -16,66 +15,42 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Compile the assignment module
+ * Compile assignment module
  *
  * 2011-06-03
- * @package      plug-in
- * @subpackage   RRU_Compile
- * @copyright    2011 Steve Beaudry, Royal Roads University
- * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    local_compile
+ * @subpackage mod_assignment
+ * @copyright  2014 Royal Roads University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
 require_once("../../../../config.php");
+require_once('../../lib.php');
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->libdir . '/plagiarismlib.php');
 
-$id = optional_param('id', 0, PARAM_INT);  // Course Module ID
-$a  = optional_param('a', 0, PARAM_INT);   // Assignment ID
+defined('MOODLE_INTERNAL') || die(); // Must load config.php first.
 
-$url = new moodle_url('/mod/assignment/view.php');
+$modname = 'assignment'; // Set to the name of the module.
+$id = optional_param('id', 0, PARAM_INT); // Get Course Module ID.
 if ($id) {
-    if (! $cm = get_coursemodule_from_id('assignment', $id)) {
-        print_error('invalidcoursemodule');
+    if (! $cm = get_coursemodule_from_id($modname, $id)) {
+        die(get_string('invalidcoursemodule', 'error'));
     }
 
-    if (! $assignment = $DB->get_record("assignment", array("id"=>$cm->instance))) {
-        print_error('invalidid', 'assignment');
+    if (! $course = $DB->get_record("course", array("id" => $cm->course))) {
+        die(get_string('coursemisconf', 'error'));
     }
 
-    if (! $course = $DB->get_record("course", array("id"=>$assignment->course))) {
-        print_error('coursemisconf', 'assignment');
+    if (! $instance = $DB->get_record($modname, array("id" => $cm->instance))) {
+        die(get_string('invalidcoursemodule', 'error'));
     }
-    $url->param('id', $id);
 } else {
-    if (!$assignment = $DB->get_record("assignment", array("id"=>$a))) {
-        print_error('invalidid', 'assignment');
-    }
-    if (! $course = $DB->get_record("course", array("id"=>$assignment->course))) {
-        print_error('coursemisconf', 'assignment');
-    }
-    if (! $cm = get_coursemodule_from_instance("assignment", $assignment->id, $course->id)) {
-        print_error('invalidcoursemodule');
-    }
-    $url->param('a', $a);
+    die(get_string('invalidcoursemodule', 'error'));
 }
 
-$PAGE->set_url($url);
-require_login($course, true, $cm);
+$intro = compile_activity_intro($cm);
 
-$PAGE->requires->js('/mod/assignment/assignment.js');
-
-require ("$CFG->dirroot/mod/assignment/type/$assignment->assignmenttype/assignment.class.php");
-$assignmentclass = "assignment_$assignment->assignmenttype";
-$assignmentinstance = new $assignmentclass($cm->id, $assignment, $cm, $course);
-
-// Actually display what we want from the assignment!
-global $USER, $OUTPUT;
-require_capability('mod/assignment:view', $assignmentinstance->context);
-$assignmentinstance->view_intro();
-$assignmentinstance->view_dates();
-// Something about the feedback is breaking the PDF creation.  It's not a requirement, so I'm
-// commenting it out.
-//$assignmentinstance->view_feedback();
-
-?>
+// Output module content: Intro (description).
+print get_string('intro', 'local_compile', $intro);

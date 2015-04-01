@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -26,5 +25,8 @@
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version  = 2011121401;
-$plugin->requires = 2010090501;
+defined('MOODLE_INTERNAL') || die();
+
+$plugin->version  = 2014101021;
+$plugin->requires = 2013110500;
+$plugin->component = 'local_draftposts';

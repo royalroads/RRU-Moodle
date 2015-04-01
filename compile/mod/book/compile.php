@@ -1,5 +1,5 @@
 <?php
-// This file is part of Book module for Moodle - http://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,128 +17,109 @@
 /**
  * Compile book module
  *
- * @package    mod
- * @subpackage book
- * @copyright  2004-2011 Petr Skoda  {@link http://skodak.org}
+ * @package    local_compile
+ * @subpackage mod_book
+ * @copyright  2014 Royal Roads University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once("../../../../config.php");
+require_once('../../lib.php');
 require_once("../../../../mod/book/locallib.php");
 require_once($CFG->libdir.'/completionlib.php');
 
-$id        = optional_param('id', 0, PARAM_INT);        // Course Module ID
-$bid       = optional_param('b', 0, PARAM_INT);         // Book id
-$chapterid = optional_param('chapterid', 0, PARAM_INT); // Chapter ID
-$edit      = optional_param('edit', -1, PARAM_BOOL);    // Edit mode
+defined('MOODLE_INTERNAL') || die(); // Must load config.php first.
 
-// =========================================================================
-// security checks START - teachers edit; students view
-// =========================================================================
+// Get and qualify Course Module ID.
+$modname = 'book'; // Set to the name of the module.
+$id = optional_param('id', 0, PARAM_INT); // Get Course Module ID.
 if ($id) {
-    $cm = get_coursemodule_from_id('book', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-    $book = $DB->get_record('book', array('id'=>$cm->instance), '*', MUST_EXIST);
+    if (! $cm = get_coursemodule_from_id($modname, $id)) {
+        die(get_string('invalidcoursemodule', 'error'));
+    }
+
+    if (! $course = $DB->get_record("course", array("id" => $cm->course))) {
+        die(get_string('coursemisconf', 'error'));
+    }
+
+    if (! $instance = $DB->get_record($modname, array("id" => $cm->instance))) {
+        die(get_string('invalidcoursemodule', 'error'));
+    }
 } else {
-    $book = $DB->get_record('book', array('id'=>$bid), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('book', $book->id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-    $id = $cm->id;
+    die(get_string('invalidcoursemodule', 'error'));
 }
 
-require_course_login($course, true, $cm);
 
-$context = get_context_instance(CONTEXT_MODULE, $cm->id);
-require_capability('mod/book:read', $context);
+$cm     = get_coursemodule_from_id('book', $id, 0, false, MUST_EXIST);
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+$book   = $DB->get_record('book', array('id' => $cm->instance), '*', MUST_EXIST);
 
-$allowedit  = has_capability('mod/book:edit', $context);
+$context = context_module::instance($cm->id);
+$PAGE->set_context($context);
+
 $viewhidden = has_capability('mod/book:viewhiddenchapters', $context);
 
-/// read chapters
+// Read chapters.
 $chapters = book_preload_chapters($book);
 
-/// check chapterid and read chapter data
-foreach($chapters as $ch) {
-        
-    if (!$ch->hidden) {
-        $chapterid = $ch->id;
-        break;
-    }
+// Empty book?
+if (count($chapters) == 0) {
+    $errormsg = get_string('nocontent', 'mod_book');
+    die($errormsg);
 }
 
-if (!$chapterid or !$chapter = $DB->get_record('book_chapters', array('id'=>$chapterid, 'bookid'=>$book->id))) {
-    print_error('errorchapter', 'mod_book', new moodle_url('/course/view.php', array('id'=>$course->id)));
-}
+// Security checks END.
 
-/// chapter is hidden for students
-if ($chapter->hidden and !$viewhidden) {
-    print_error('errorchapter', 'mod_book', new moodle_url('/course/view.php', array('id'=>$course->id)));
-}
-
-$PAGE->set_url('/mod/book/view.php', array('id'=>$id, 'chapterid'=>$chapterid));
-
-// =========================================================================
-// security checks  END
-// =========================================================================
-
-
-///read standard strings
-$strbooks = get_string('modulenameplural', 'mod_book');
-$strbook  = get_string('modulename', 'mod_book');
-$strtoc   = get_string('toc', 'mod_book');
-
-/// prepare header
-$PAGE->set_title(format_string($book->name));
-$PAGE->add_body_class('mod_book');
-$PAGE->set_heading(format_string($course->fullname));
-
-book_add_fake_block($chapters, $chapter, $book, $cm, $edit);
-
-/// prepare chapter navigation icons
+// Prepare chapter navigation icons.
 $previd = null;
 $nextid = null;
-$last = null;
-foreach ($chapters as $ch) {
-    
-    if ($ch->hidden == 1) {
-        continue;
+$last   = null;
+
+// Is the user a student?
+$userroles = get_user_roles(context_course::instance($course->id), $USER->id);
+$isstudent = false; // Initialize.
+if (!empty($userroles)) { // No roles, not a student.
+    foreach($userroles as $userrole) {
+        if ($userrole->shortname == 'student') {
+            $isstudent = true;
+            break; // Found 'student' among user's roles in this course, break out.
+        }
     }
-    $chapter = $DB->get_record('book_chapters', array('id'=>$ch->id, 'bookid'=>$book->id));    
+}
+
+foreach ($chapters as $ch) {
+    // If student, don't display hidden chapter.
+    if ($isstudent) {
+        if ($ch->hidden == 1) {
+            continue;
+        }
+    }
+
+    $chapter = $DB->get_record('book_chapters', array('id' => $ch->id, 'bookid' => $book->id));
     $sec = '';
-    if ($section = $DB->get_record('course_sections', array('id'=>$cm->section))) {
+    if ($section = $DB->get_record('course_sections', array('id' => $cm->section))) {
         $sec = $section->section;
     }
-    if ($course->id == $SITE->id) {
-        $returnurl = "$CFG->wwwroot/";
-    } else {
-        $returnurl = "$CFG->wwwroot/course/view.php?id=$course->id#section-$sec";
-    }
-    
-    // we are cheating a bit here, viewing the last page means user has viewed the whole book
+
+    // We are cheating a bit here, viewing the last page means user has viewed the whole book.
     $completion = new completion_info($course);
     $completion->set_module_viewed($cm);
 
-    // =====================================================
-    // Book display HTML code
-    // =====================================================
-
-    // chapter itself
+    // The chapter itself.
     echo $OUTPUT->box_start('generalbox book_content');
-    //echo $ch->id. '<br />';
     if (!$book->customtitles) {
-        $hidden = $ch->hidden ? 'dimmed_text' : '';
+        $hidden = $ch->hidden ? ' dimmed_text' : '';
         if (!$ch->subchapter) {
             $currtitle = book_get_chapter_title($ch->id, $chapters, $book, $context);
-            echo '<p class="book_chapter_title '.$hidden.'">'.$currtitle.'</p>';
+            echo '<h3 class="book_chapter_title'.$hidden.'">'.$currtitle.'</h3>';
         } else {
             $currtitle = book_get_chapter_title($chapters[$ch->id]->parent, $chapters, $book, $context);
             $currsubtitle = book_get_chapter_title($ch->id, $chapters, $book, $context);
-            echo '<p class="book_chapter_title '.$hidden.'">'.$currtitle.'<br />'.$currsubtitle.'</p>';
+            echo '<h3 class="book_chapter_title'.$hidden.'">'.$currtitle.'<br />'.$currsubtitle.'</h3>';
         }
     }
-    
+
     $chaptertext = file_rewrite_pluginfile_urls($chapter->content, 'pluginfile.php', $context->id, 'mod_book', 'chapter', $ch->id);
     echo format_text($chaptertext, FORMAT_HTML);
-
     echo $OUTPUT->box_end();
 }

@@ -24,17 +24,23 @@
  * @copyright    2011 Andrew Zoltay, Royal Roads University
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'RRU Draft Posts';
 
-// Admin Settings
+// Admin Settings.
 $string['saveinterval'] = 'Save interval';
 $string['saveinterval_help'] = 'Enter the interval duration between draft saves(in seconds)';
 
-// Drafts general usage
+// Event: log_forumdrafts_viewed.
+$string['eventlog_forumdrafts_viewed'] = 'The user viewed the list of forum drafts';
+// Event: log_draft_deleted.
+$string['eventlog_draft_deleted'] = 'Delete forum draft';
+
+// Drafts general usage.
 $string['actions'] = 'Actions';
 $string['confirmdelete'] = 'Are you sure you want to delete this draft?';
-$string['confirmload'] = 'Do you want to load your unfinished draft?';
+$string['confirmload'] = 'Do you want to load an unfinished draft?';
 $string['date'] = 'Date';
 $string['discussions'] = 'Discussions';
 $string['draftdiscusstopic'] = 'Discussion topic';
@@ -46,6 +52,7 @@ $string['deletehint'] = 'Delete draft';
 $string['deletesuccess'] = 'Draft was deleted';
 $string['denied'] = 'You do not have permission to delete this draft';
 $string['getfail'] = 'Failed to retrieve draft';
+$string['eventforumdraftsviewed'] = 'The user viewed the list of forum drafts';
 $string['nodrafts'] = '(No discussion drafts have been saved)';
 $string['replies'] = 'Replies';
 $string['restore'] = 'Restore';

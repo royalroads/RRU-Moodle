@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -17,35 +16,44 @@
 
 /**
  * Settings of the module
- * Here, we extend the settings for the the course_compile add-in.
+ * Here, we extend the settings for the the Course Compile and Print plugin.
  * These settings control which module types are included in a 'Course Compile'.
  * We add a custom admin page, then we add a setting for each installed module type.  Additionally
- * we check to see if a custome 'compile.php' exists for the module type, and if so, we enable the 
+ * we check to see if a custome 'compile.php' exists for the module type, and if so, we enable the
  * module type by default.
- * 
+ *
  * 2011-06-03
- * @package      plug-in
- * @subpackage   RRU_Compile
- * @copyright    2011 Steve Beaudry, Royal Roads University
+ * @package      local_compile
+ * @copyright    2014 Royal Roads University
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-global $DB, $CFG;
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) { // needs this condition or there is error on login page
-    $settings = new admin_settingpage('course_compile', 'Compile and Print');
-    $ADMIN->add('localplugins', $settings);
+global $DB, $CFG;
 
+if ($hassiteconfig) { // Needs this condition or there is error on login page.
+    $settings = new admin_settingpage('local_compile', 'Compile and Print');
+    $ADMIN->add('localplugins', $settings);
+    // Select Modules.
     if ($allmods = $DB->get_records("modules")) {
         foreach ($allmods as $mod) {
             if ((file_exists("$CFG->dirroot/mod/$mod->name/lib.php")) && ($mod->visible)) {
                 $settings->add(new admin_setting_configcheckbox(
-								"course_compile/".$mod->name, 
-								"Compile ". get_string("modulenameplural", "$mod->name"), 
-								"Include ". get_string("modulenameplural", "$mod->name"). " in Compile and Print",
+                    "local_compile/".$mod->name,
+                    "Compile ". get_string("modulenameplural", "$mod->name"),
+                    "Include ". get_string("modulenameplural", "$mod->name"). " in Compile and Print",
                 file_exists("$CFG->dirroot/local/compile/mod/$mod->name/compile.php")));
             }
         }
     }
+
+    // Manage domain blacklist.
+    $settings->add(new admin_setting_configtextarea(
+            'local_compile/blacklistresources', // Setting name.
+            get_string('excludedomainscaption', 'local_compile'), // Display name.
+            get_string('excludedomainsverbose', 'local_compile'), // Description.
+            '' // Fefault value.
+                  ) );
+
 }

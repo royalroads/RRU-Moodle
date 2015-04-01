@@ -24,17 +24,23 @@
  * @copyright    2012 Andrew Zoltay, Royal Roads University
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-global $DB;
 
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) { // needs this condition or there is error on login page
+global $DB;
+
+if ($hassiteconfig) { // Needs this condition or there is error on login page.
     $settings = new admin_settingpage('defaultcourses', get_string('pluginname', 'local_defaultcourses'));
     $ADMIN->add('localplugins', $settings);
 
-    // Add a setting to define which courses are default courses
-    $multiselectitems = $DB->get_records_select_menu('course', 'id <> 1', Null, 'fullname ASC', 'id, fullname');
-    $settings->add(new admin_setting_configmultiselect('local_defaultcourses/'.'courseids', get_string('definecourseids', 'local_defaultcourses'),
-                                           get_string('definecourseids_help', 'local_defaultcourses'), array(), $multiselectitems));
-    
+    // Add a setting to define which courses are default courses.
+    $multiselectitems = $DB->get_records_select_menu('course', 'id <> 1', null, 'fullname ASC', 'id, fullname');
+    if ($multiselectitems) {
+        $settings->add(new admin_setting_configmultiselect('local_defaultcourses/'.'courseids',
+                                           get_string('definecourseids', 'local_defaultcourses'),
+                                           get_string('definecourseids_help', 'local_defaultcourses'),
+                                           array(),
+                                           $multiselectitems));
+    }
+
 }
