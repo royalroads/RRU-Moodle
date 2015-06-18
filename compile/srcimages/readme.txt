@@ -1,1 +1,0 @@
-local/compile/srcimages is the temporary directory where images are stored while a PDF is being built.  It should be owner and group writeable (775) and must exist for PDF compile to work.
