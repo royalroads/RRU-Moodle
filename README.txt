@@ -1,6 +1,6 @@
 Royal Roads Moodle Custom Development
 =======================================
-A shared resources of our custom development
+Shared resources of our custom development
 
 documentation is shared with each.
 
